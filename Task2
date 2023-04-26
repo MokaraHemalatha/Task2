@@ -1,0 +1,119 @@
+**To create a Helm chart for each microservice in the provided GitHub repository, we will follow these steps:
+
+**Clone the GitHub repository:
+git clone https://github.com/kimoai/DevOps-task.git
+
+
+**Create a new Helm chart for each microservice:
+helm create frontend
+helm create api
+helm create database
+
+
+**Modify the Chart.yaml file for each chart:
+apiVersion: v2
+name: frontend
+description: A Helm chart for deploying the frontend microservice to Kubernetes
+version: 0.1.0
+
+# Repeat for api and database charts
+
+
+**Modify the values.yaml file for each chart. Here's an example for the frontend chart:
+# values.yaml
+
+name: frontend
+image:
+  repository: kimoai/devops-task-frontend
+  tag: v1.0.0
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  hosts:
+    - host: frontend.example.com
+      paths:
+        - path: /
+  tls:
+    - secretName: frontend-tls
+      hosts:
+        - frontend.example.com
+
+
+**Create a deployment.yaml file for each chart. Here's an example for the frontend chart:
+
+# deployment.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.name }}-deployment
+  labels:
+    app: {{ .Values.name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.name }}
+    spec:
+      containers:
+        - name: {{ .Values.name }}
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+
+
+**Create a service.yaml file for each chart. Here's an example for the frontend chart:
+
+# service.yaml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.name }}-service
+  labels:
+    app: {{ .Values.name }}
+spec:
+  selector:
+    app: {{ .Values.name }}
+  type: {{ .Values.service.type }}
+  ports:
+    - name: http
+      port: {{ .Values.service.port }}
+      targetPort: http
+
+
+**Create an ingress.yaml file for each chart. Here's an example for the frontend chart:
+
+# ingress.yaml
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Values.name }}-ingress
+  annotations:
+    kubernetes.io/ingress.class: {{ .Values.ingress.annotations."kubernetes.io/ingress.class" }}
+    nginx.ingress.kubernetes.io/ssl-redirect: {{ .Values.ingress.annotations."nginx.ingress.kubernetes.io/ssl-redirect" }}
+spec:
+  tls:
+    - hosts:
+        - {{ .Values.ingress.tls.hosts }}
+      secretName: {{ .Values.ingress.tls.secretName }}
+  rules:
+    - host: {{ .Values.ingress.hosts.host }}
+      http:
+        paths:
+          - path: {{ .Values.ingres
